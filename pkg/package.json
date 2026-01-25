@@ -11,13 +11,11 @@
   "files": [
     "tailored_ephemeris_bg.wasm",
     "tailored_ephemeris.js",
-    "tailored_ephemeris_bg.js",
     "tailored_ephemeris.d.ts"
   ],
   "main": "tailored_ephemeris.js",
   "types": "tailored_ephemeris.d.ts",
   "sideEffects": [
-    "./tailored_ephemeris.js",
     "./snippets/*"
   ],
   "keywords": [

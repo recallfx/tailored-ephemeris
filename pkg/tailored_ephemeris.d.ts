@@ -272,3 +272,74 @@ export function swe_julday(year: number, month: number, day: number, hour: numbe
  * Object with year, month, day, hour
  */
 export function swe_revjul(jd: number, gregflag?: number | null): any;
+
+export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
+
+export interface InitOutput {
+    readonly memory: WebAssembly.Memory;
+    readonly swe_julday: (a: number, b: number, c: number, d: number, e: number) => number;
+    readonly swe_revjul: (a: number, b: number) => any;
+    readonly swe_calc_ut: (a: number, b: number, c: number) => any;
+    readonly swe_houses: (a: number, b: number, c: number, d: number, e: number) => any;
+    readonly swe_get_planet_name: (a: number) => [number, number];
+    readonly __wbg_se_free: (a: number, b: number) => void;
+    readonly se_MERCURY: () => number;
+    readonly se_VENUS: () => number;
+    readonly se_MARS: () => number;
+    readonly se_JUPITER: () => number;
+    readonly se_SATURN: () => number;
+    readonly se_URANUS: () => number;
+    readonly se_NEPTUNE: () => number;
+    readonly se_PLUTO: () => number;
+    readonly se_MEAN_NODE: () => number;
+    readonly se_TRUE_NODE: () => number;
+    readonly se_GREG_CAL: () => number;
+    readonly se_JUL_CAL: () => number;
+    readonly se_FLG_SPEED: () => number;
+    readonly swe_calc_ut_batch: (a: number, b: number, c: number, d: number) => any;
+    readonly swe_calc_ut_all: (a: number, b: number) => any;
+    readonly getAllPlanetaryPositions: (a: number) => any;
+    readonly getNatalChart: (a: number, b: number, c: number) => any;
+    readonly getMoonPhase: (a: number) => [number, number];
+    readonly getSignFromLongitude: (a: number) => [number, number];
+    readonly isVoidOfCourseMoon: (a: number) => number;
+    readonly getPlanetaryHourRuler: (a: number, b: number, c: number, d: number) => [number, number];
+    readonly computeTransitAspects: (a: number, b: any) => any;
+    readonly computeMundaneAspects: (a: number) => any;
+    readonly computeTransitAspectsWithOrbs: (a: number, b: any, c: any) => any;
+    readonly computeMundaneAspectsWithOrbs: (a: number, b: any) => any;
+    readonly computeNatalAspectsWithOrbs: (a: number, b: number, c: number, d: any) => any;
+    readonly calculateChart: (a: number, b: number, c: number, d: number, e: number, f: number) => any;
+    readonly getPlanetInHouse: (a: number, b: number, c: number) => number;
+    readonly se_MOON: () => number;
+    readonly se_SUN: () => number;
+    readonly __wbindgen_malloc: (a: number, b: number) => number;
+    readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
+    readonly __wbindgen_exn_store: (a: number) => void;
+    readonly __externref_table_alloc: () => number;
+    readonly __wbindgen_externrefs: WebAssembly.Table;
+    readonly __wbindgen_free: (a: number, b: number, c: number) => void;
+    readonly __wbindgen_start: () => void;
+}
+
+export type SyncInitInput = BufferSource | WebAssembly.Module;
+
+/**
+ * Instantiates the given `module`, which can either be bytes or
+ * a precompiled `WebAssembly.Module`.
+ *
+ * @param {{ module: SyncInitInput }} module - Passing `SyncInitInput` directly is deprecated.
+ *
+ * @returns {InitOutput}
+ */
+export function initSync(module: { module: SyncInitInput } | SyncInitInput): InitOutput;
+
+/**
+ * If `module_or_path` is {RequestInfo} or {URL}, makes a request and
+ * for everything else, calls `WebAssembly.instantiate` directly.
+ *
+ * @param {{ module_or_path: InitInput | Promise<InitInput> }} module_or_path - Passing `InitInput` directly is deprecated.
+ *
+ * @returns {Promise<InitOutput>}
+ */
+export default function __wbg_init (module_or_path?: { module_or_path: InitInput | Promise<InitInput> } | InitInput | Promise<InitInput>): Promise<InitOutput>;
