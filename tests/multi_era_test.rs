@@ -2,7 +2,7 @@
 //!
 //! Tests accuracy across 150 years (1925-2075) at key dates
 
-use horoscope::{calc_ut, julian, Planet};
+use tailored_ephemeris::{calc_ut, julian, Planet};
 
 /// Test data structure: (year, month, day, planet_longitudes[11])
 /// Planets: Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto, TrueNode

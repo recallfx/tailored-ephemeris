@@ -2,7 +2,7 @@
 //!
 //! Reference values from swetest with Moshier ephemeris for 2000-01-01 12:00 UT
 
-use horoscope::{calc_ut, calc_houses, julian, Planet};
+use tailored_ephemeris::{calc_ut, calc_houses, julian, Planet};
 
 /// Reference values from Swiss Ephemeris (swetest -b1.1.2000 -ut12:00 -eswe)
 /// Format: (longitude, speed, distance)

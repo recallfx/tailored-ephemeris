@@ -18,8 +18,8 @@ use crate::constants::SE_GREG_CAL;
 ///
 /// # Example
 /// ```
-/// use horoscope::julian::julday;
-/// use horoscope::constants::SE_GREG_CAL;
+/// use tailored_ephemeris::julian::julday;
+/// use tailored_ephemeris::constants::SE_GREG_CAL;
 ///
 /// // J2000.0 epoch: 2000-01-01 12:00 UT
 /// let jd = julday(2000, 1, 1, 12.0, SE_GREG_CAL);
