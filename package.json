@@ -1,0 +1,29 @@
+{
+  "name": "tailored-ephemeris",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Minimal astronomical ephemeris calculations for horoscope generation",
+  "license": "GPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/recallfx/tailored-ephemeris"
+  },
+  "main": "./pkg/tailored_ephemeris.js",
+  "types": "./pkg/tailored_ephemeris.d.ts",
+  "exports": {
+    ".": {
+      "types": "./pkg/tailored_ephemeris.d.ts",
+      "import": "./pkg/tailored_ephemeris.js"
+    }
+  },
+  "files": [
+    "pkg/"
+  ],
+  "keywords": [
+    "ephemeris",
+    "astrology",
+    "wasm",
+    "horoscope",
+    "astronomy"
+  ]
+}
