@@ -756,6 +756,15 @@ pub fn compute_natal_aspects_with_orbs(jd_ut: f64, lat: f64, lon: f64, orb_confi
     serde_wasm_bindgen::to_value(&js_aspects).unwrap_or(JsValue::NULL)
 }
 
+/// Basic chart result for JavaScript
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JsBasicChart {
+    pub sun_sign: String,
+    pub moon_sign: String,
+    pub rising_sign: String,
+}
+
 /// Calculate basic chart (sun, moon, rising signs)
 ///
 /// Quick calculation for sun sign, moon sign, and rising sign
@@ -776,11 +785,11 @@ pub fn calculate_chart(year: i32, month: i32, day: i32, hour: f64, lat: f64, lon
         Err(_) => return JsValue::NULL,
     };
 
-    let result = serde_json::json!({
-        "sunSign": astrology::get_sign_from_longitude(sun.longitude),
-        "moonSign": astrology::get_sign_from_longitude(moon.longitude),
-        "risingSign": astrology::get_sign_from_longitude(houses.ascendant),
-    });
+    let result = JsBasicChart {
+        sun_sign: astrology::get_sign_from_longitude(sun.longitude).to_string(),
+        moon_sign: astrology::get_sign_from_longitude(moon.longitude).to_string(),
+        rising_sign: astrology::get_sign_from_longitude(houses.ascendant).to_string(),
+    };
 
     serde_wasm_bindgen::to_value(&result).unwrap_or(JsValue::NULL)
 }
