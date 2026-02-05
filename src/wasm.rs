@@ -156,6 +156,7 @@ pub fn swe_get_planet_name(ipl: i32) -> String {
         9 => "Pluto".to_string(),
         10 => "Mean Node".to_string(),
         11 => "True Node".to_string(),
+        14 => "Earth".to_string(),
         _ => format!("Planet {}", ipl),
     }
 }
@@ -204,6 +205,9 @@ impl SE {
 
     #[wasm_bindgen(getter)]
     pub fn TRUE_NODE() -> i32 { 11 }
+
+    #[wasm_bindgen(getter)]
+    pub fn EARTH() -> i32 { 14 }
 
     #[wasm_bindgen(getter)]
     pub fn GREG_CAL() -> i32 { 1 }
@@ -364,6 +368,13 @@ impl From<JsOrbConfig> for astrology::OrbConfig {
     }
 }
 
+/// Heliocentric chart for JavaScript (planets only, no houses/angles)
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JsHeliocentricChart {
+    pub planets: Vec<JsPlanetPosition>,
+}
+
 /// Get all planetary positions at a given time
 ///
 /// Returns array of planet positions with sign, degree, and retrograde status
@@ -422,6 +433,67 @@ pub fn get_natal_chart(jd_ut: f64, lat: f64, lon: f64) -> JsValue {
                     sign_key: chart.north_node_sign.to_string(),
                     sign_degree: chart.north_node_degree,
                 },
+            };
+            serde_wasm_bindgen::to_value(&js_chart).unwrap_or(JsValue::NULL)
+        }
+        Err(_) => JsValue::NULL,
+    }
+}
+
+/// Get heliocentric planetary positions at a given time
+///
+/// Returns array of planet positions for Earth + Mercury through Pluto (9 planets).
+/// All positions are heliocentric (relative to the Sun).
+/// isRetrograde is always false (no retrograde in heliocentric frame).
+///
+/// # Arguments
+/// * `jd_ut` - Julian Day in Universal Time
+///
+/// # Returns
+/// Array of planet positions with sign, degree, speed, and isRetrograde (always false)
+#[wasm_bindgen(js_name = getHeliocentricPositions)]
+pub fn get_heliocentric_positions(jd_ut: f64) -> JsValue {
+    match astrology::get_all_heliocentric_positions(jd_ut) {
+        Ok(positions) => {
+            let js_positions: Vec<JsPlanetPosition> = positions.iter().map(|p| {
+                JsPlanetPosition {
+                    planet_key: p.planet_key.to_string(),
+                    longitude: p.longitude,
+                    sign_key: p.sign_key.to_string(),
+                    sign_degree: p.sign_degree,
+                    is_retrograde: false,
+                    speed: p.speed,
+                }
+            }).collect();
+            serde_wasm_bindgen::to_value(&js_positions).unwrap_or(JsValue::NULL)
+        }
+        Err(_) => JsValue::NULL,
+    }
+}
+
+/// Get heliocentric chart
+///
+/// Returns a chart with only planets (no houses, ascendant, or midheaven
+/// since those are geocentric concepts).
+///
+/// # Arguments
+/// * `jd_ut` - Julian Day in Universal Time
+///
+/// # Returns
+/// Heliocentric chart with planets array
+#[wasm_bindgen(js_name = getHeliocentricChart)]
+pub fn get_heliocentric_chart(jd_ut: f64) -> JsValue {
+    match astrology::get_heliocentric_chart(jd_ut) {
+        Ok(chart) => {
+            let js_chart = JsHeliocentricChart {
+                planets: chart.planets.iter().map(|p| JsPlanetPosition {
+                    planet_key: p.planet_key.to_string(),
+                    longitude: p.longitude,
+                    sign_key: p.sign_key.to_string(),
+                    sign_degree: p.sign_degree,
+                    is_retrograde: false,
+                    speed: p.speed,
+                }).collect(),
             };
             serde_wasm_bindgen::to_value(&js_chart).unwrap_or(JsValue::NULL)
         }
