@@ -7,7 +7,7 @@
 //! - Planetary hours
 //! - Void-of-course Moon detection
 
-use crate::{calc_ut, calc_houses, Planet, Result};
+use crate::{calc_ut, calc_heliocentric_ut, calc_houses, Planet, Result};
 
 /// Zodiac signs in order (0 = Aries, 11 = Pisces)
 pub const ZODIAC_SIGNS: [&str; 12] = [
@@ -426,6 +426,50 @@ pub fn get_natal_chart(jd: f64, latitude: f64, longitude: f64) -> Result<NatalCh
         north_node_sign: get_sign_from_longitude(node.longitude),
         north_node_degree: get_sign_degree(node.longitude),
     })
+}
+
+/// Heliocentric chart (planets only, no houses/angles)
+#[derive(Debug, Clone)]
+pub struct HeliocentricChart {
+    pub planets: Vec<PlanetPosition>,
+}
+
+/// Planet keys for heliocentric calculations (Earth + Mercury through Pluto)
+pub const HELIOCENTRIC_PLANET_KEYS: [(&str, Planet); 9] = [
+    ("earth", Planet::Earth),
+    ("mercury", Planet::Mercury),
+    ("venus", Planet::Venus),
+    ("mars", Planet::Mars),
+    ("jupiter", Planet::Jupiter),
+    ("saturn", Planet::Saturn),
+    ("uranus", Planet::Uranus),
+    ("neptune", Planet::Neptune),
+    ("pluto", Planet::Pluto),
+];
+
+/// Get all heliocentric planetary positions at a given time
+pub fn get_all_heliocentric_positions(jd: f64) -> Result<Vec<PlanetPosition>> {
+    let mut positions = Vec::with_capacity(9);
+
+    for &(key, planet) in &HELIOCENTRIC_PLANET_KEYS {
+        let pos = calc_heliocentric_ut(jd, planet, true)?;
+        positions.push(PlanetPosition {
+            planet_key: key,
+            longitude: pos.longitude,
+            sign_key: get_sign_from_longitude(pos.longitude),
+            sign_degree: get_sign_degree(pos.longitude),
+            is_retrograde: false, // No retrograde in heliocentric frame
+            speed: pos.speed_longitude,
+        });
+    }
+
+    Ok(positions)
+}
+
+/// Get heliocentric chart (planets only)
+pub fn get_heliocentric_chart(jd: f64) -> Result<HeliocentricChart> {
+    let planets = get_all_heliocentric_positions(jd)?;
+    Ok(HeliocentricChart { planets })
 }
 
 /// Check if Moon is void-of-course

@@ -104,6 +104,7 @@ fn test_multi_era_accuracy() {
                 Planet::Neptune => "Neptune",
                 Planet::Pluto => "Pluto",
                 Planet::TrueNode => "TrueNode",
+                Planet::Earth => "Earth",
             };
 
             println!("{:<12} {:>10.4} {:>10.4} {:>8.1}",

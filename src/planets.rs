@@ -24,6 +24,7 @@ pub fn calc_planet(jd_et: f64, planet: Planet, calc_speed: bool) -> Result<Posit
         Planet::Uranus => calc_uranus(jd_et, calc_speed),
         Planet::Neptune => calc_neptune(jd_et, calc_speed),
         Planet::Pluto => calc_pluto(jd_et, calc_speed),
+        Planet::Earth => Err(Error::InvalidPlanet(planet as i32)), // Earth not valid for geocentric
         _ => Err(Error::InvalidPlanet(planet as i32)),
     }
 }
@@ -272,6 +273,223 @@ fn calc_planet_kepler(
     })
 }
 
+/// Calculate heliocentric planet position
+///
+/// Returns heliocentric ecliptic coordinates (longitude relative to Sun).
+/// Valid for Earth and Mercury through Pluto. Not valid for Sun, Moon, or TrueNode.
+pub fn calc_heliocentric(jd_et: f64, planet: Planet, calc_speed: bool) -> Result<Position> {
+    if jd_et < MOSHIER_START || jd_et > MOSHIER_END {
+        return Err(Error::OutOfRange);
+    }
+
+    match planet {
+        Planet::Earth => calc_heliocentric_earth(jd_et, calc_speed),
+        Planet::Mercury => calc_heliocentric_planet(jd_et, planet, calc_speed),
+        Planet::Venus => calc_heliocentric_planet(jd_et, planet, calc_speed),
+        Planet::Mars => calc_heliocentric_planet(jd_et, planet, calc_speed),
+        Planet::Jupiter => calc_heliocentric_planet(jd_et, planet, calc_speed),
+        Planet::Saturn => calc_heliocentric_planet(jd_et, planet, calc_speed),
+        Planet::Uranus => calc_heliocentric_planet(jd_et, planet, calc_speed),
+        Planet::Neptune => calc_heliocentric_planet(jd_et, planet, calc_speed),
+        Planet::Pluto => calc_heliocentric_planet(jd_et, planet, calc_speed),
+        _ => Err(Error::InvalidPlanet(planet as i32)),
+    }
+}
+
+/// Get orbital elements for a planet at a given Julian date
+fn get_orbital_elements(jd: f64, planet: Planet) -> Option<(f64, f64, f64, f64, f64, f64)> {
+    let t = (jd - J2000) / DAYS_PER_CENTURY;
+
+    match planet {
+        Planet::Mercury => {
+            let l = deg_norm(252.2509 + 149474.0722 * t);
+            let a = 0.38710;
+            let e = 0.20563 + 0.000020 * t;
+            let i = 7.005 + 0.0018 * t;
+            let omega = 48.331 + 1.1852 * t;
+            let pi = 77.456 + 1.5555 * t;
+            Some((l, a, e, i, omega, pi))
+        }
+        Planet::Venus => {
+            let l = deg_norm(181.9798 + 58519.2130 * t);
+            let a = 0.72333;
+            let e = 0.00677 - 0.000047 * t;
+            let i = 3.3947 + 0.0010 * t;
+            let omega = 76.680 + 0.9011 * t;
+            let pi = 131.533 + 1.4087 * t;
+            Some((l, a, e, i, omega, pi))
+        }
+        Planet::Mars => {
+            let l = deg_norm(355.4330 + 19141.6964 * t);
+            let a = 1.52368;
+            let e = 0.09340 + 0.000090 * t;
+            let i = 1.8497 - 0.0007 * t;
+            let omega = 49.558 + 0.7721 * t;
+            let pi = 336.060 + 1.8410 * t;
+            Some((l, a, e, i, omega, pi))
+        }
+        Planet::Jupiter => {
+            let l = deg_norm(34.29644051 + 3036.06 * t + 0.00022374 * t * t);
+            let a = 5.202887 + 0.0000019 * t;
+            let e = 0.04838624 - 0.00013253 * t;
+            let i = 1.30327 - 0.00019872 * t;
+            let omega = 100.47390909 + 0.20469106 * t;
+            let pi = 14.72847983 + 0.21252668 * t;
+            Some((l, a, e, i, omega, pi))
+        }
+        Planet::Saturn => {
+            let l = deg_norm(50.11432077 + 1223.88 * t - 0.00019837 * t * t);
+            let a = 9.536676 + 0.0000044 * t;
+            let e = 0.05386179 - 0.00050991 * t;
+            let i = 2.48887878 + 0.00193609 * t;
+            let omega = 113.66242448 - 0.28867794 * t;
+            let pi = 92.59887831 - 0.04149890 * t;
+            Some((l, a, e, i, omega, pi))
+        }
+        Planet::Uranus => {
+            let l = deg_norm(313.24710451 + 429.8520 * t + 0.00000434 * t * t);
+            let a = 19.189165 - 0.0000024 * t;
+            let e = 0.04725744 - 0.00004397 * t;
+            let i = 0.77319689 - 0.00019490 * t;
+            let omega = 74.01692503 + 0.04240589 * t;
+            let pi = 170.95427630 + 0.40805281 * t;
+            Some((l, a, e, i, omega, pi))
+        }
+        Planet::Neptune => {
+            let l = deg_norm(304.88197031 + 219.8995 * t - 0.00000070 * t * t);
+            let a = 30.069923 + 0.00000026 * t;
+            let e = 0.00859048 + 0.00000513 * t;
+            let i = 1.76995259 + 0.00022400 * t;
+            let omega = 131.78422574 - 0.00508664 * t;
+            let pi = 44.96476227 - 0.32241464 * t;
+            Some((l, a, e, i, omega, pi))
+        }
+        Planet::Pluto => {
+            let l = deg_norm(238.9286 + 146.60 * t);
+            let a = 39.48169;
+            let e = 0.24883 + 0.00005 * t;
+            let i = 17.1417;
+            let omega = 110.299;
+            let pi = 224.067;
+            Some((l, a, e, i, omega, pi))
+        }
+        _ => None,
+    }
+}
+
+/// Calculate heliocentric position for Mercury-Pluto using Keplerian elements
+fn calc_heliocentric_planet(jd: f64, planet: Planet, calc_speed: bool) -> Result<Position> {
+    let (mean_lon, semi_major, ecc, incl, asc_node, lon_peri) =
+        get_orbital_elements(jd, planet).ok_or(Error::InvalidPlanet(planet as i32))?;
+
+    calc_heliocentric_kepler(jd, mean_lon, semi_major, ecc, incl, asc_node, lon_peri, calc_speed)
+}
+
+/// Calculate heliocentric position using Keplerian elements
+/// Returns heliocentric ecliptic coordinates (position relative to Sun)
+fn calc_heliocentric_kepler(
+    jd: f64,
+    mean_lon: f64,
+    semi_major: f64,
+    ecc: f64,
+    incl: f64,
+    asc_node: f64,
+    lon_peri: f64,
+    calc_speed: bool,
+) -> Result<Position> {
+    // Mean anomaly
+    let m = deg_norm(mean_lon - lon_peri) * DEG_TO_RAD;
+
+    // Solve Kepler's equation: E - e*sin(E) = M
+    let e_anom = solve_kepler(m, ecc);
+
+    // True anomaly
+    let v = 2.0 * ((1.0 + ecc).sqrt() * (e_anom / 2.0).tan()).atan2((1.0 - ecc).sqrt());
+
+    // Heliocentric distance
+    let r = semi_major * (1.0 - ecc * e_anom.cos());
+
+    // Argument of latitude
+    let u = v + (lon_peri - asc_node) * DEG_TO_RAD;
+
+    // Convert to heliocentric ecliptic coordinates
+    let incl_rad = incl * DEG_TO_RAD;
+    let node_rad = asc_node * DEG_TO_RAD;
+
+    let x_ecl = r * (node_rad.cos() * u.cos() - node_rad.sin() * u.sin() * incl_rad.cos());
+    let y_ecl = r * (node_rad.sin() * u.cos() + node_rad.cos() * u.sin() * incl_rad.cos());
+    let z_ecl = r * u.sin() * incl_rad.sin();
+
+    // Convert directly to heliocentric spherical coordinates (no Earth subtraction)
+    let dist = (x_ecl * x_ecl + y_ecl * y_ecl + z_ecl * z_ecl).sqrt();
+    let lon = deg_norm(y_ecl.atan2(x_ecl) * RAD_TO_DEG);
+    let lat = (z_ecl / dist).asin() * RAD_TO_DEG;
+
+    // Speed calculation by numerical differentiation
+    let speed = if calc_speed {
+        let dt = 0.1;
+        let pos2 = calc_heliocentric_kepler(
+            jd + dt,
+            mean_lon + dt * 360.0 / (365.25 * semi_major.powf(1.5)),
+            semi_major, ecc, incl, asc_node, lon_peri, false,
+        )?;
+        // Heliocentric speed is always positive (take absolute value)
+        angle_diff(pos2.longitude, lon).abs() / dt
+    } else {
+        0.0
+    };
+
+    Ok(Position {
+        longitude: lon,
+        latitude: lat,
+        distance: dist,
+        speed_longitude: speed,
+        speed_latitude: 0.0,
+        speed_distance: 0.0,
+    })
+}
+
+/// Calculate Earth's heliocentric position as a Position struct
+fn calc_heliocentric_earth(jd: f64, calc_speed: bool) -> Result<Position> {
+    let t = (jd - J2000) / DAYS_PER_CENTURY;
+
+    // Earth mean elements
+    let l = deg_norm(100.4665 + 36000.7698 * t) * DEG_TO_RAD;
+    let e = 0.01671 - 0.00004 * t;
+
+    // Mean anomaly
+    let m = deg_norm(357.5291 + 35999.0503 * t) * DEG_TO_RAD;
+
+    // Equation of center
+    let c = (2.0 * e - 0.25 * e * e * e) * m.sin()
+        + 1.25 * e * e * (2.0 * m).sin()
+        + 13.0 / 12.0 * e * e * e * (3.0 * m).sin();
+
+    // True longitude and radius
+    let v = l + c;
+    let r = 1.00014 * (1.0 - e * e) / (1.0 + e * (m + c).cos());
+
+    let lon = deg_norm(v * RAD_TO_DEG);
+
+    // Speed calculation by numerical differentiation
+    let speed = if calc_speed {
+        let dt = 0.1;
+        let pos2 = calc_heliocentric_earth(jd + dt, false)?;
+        angle_diff(pos2.longitude, lon).abs() / dt
+    } else {
+        0.0
+    };
+
+    Ok(Position {
+        longitude: lon,
+        latitude: 0.0, // Earth orbits in the ecliptic plane
+        distance: r,
+        speed_longitude: speed,
+        speed_latitude: 0.0,
+        speed_distance: 0.0,
+    })
+}
+
 /// Calculate Earth's heliocentric position
 fn calc_earth_helio(jd: f64) -> (f64, f64, f64) {
     let t = (jd - J2000) / DAYS_PER_CENTURY;
@@ -329,6 +547,100 @@ mod tests {
         // Just check it returns a valid position
         assert!(pos.longitude >= 0.0 && pos.longitude < 360.0);
         assert!(pos.distance > 0.0);
+    }
+
+    #[test]
+    fn test_heliocentric_earth_opposite_sun() {
+        // Earth's heliocentric longitude should be ~180° opposite to geocentric Sun longitude
+        let jd = julday_greg(2024, 1, 1, 12.0);
+        let sun_geo = calc_sun(jd, true).unwrap();
+        let earth_helio = calc_heliocentric_earth(jd, true).unwrap();
+
+        let diff = ((earth_helio.longitude - sun_geo.longitude).abs() - 180.0).abs();
+        assert!(diff < 1.0, "Earth heliocentric should be ~180° from geocentric Sun, diff from 180°: {:.4}°", diff);
+    }
+
+    #[test]
+    fn test_heliocentric_earth_distance() {
+        // Earth distance from Sun should be ~1 AU (0.983 - 1.017 range)
+        let jd = julday_greg(2024, 6, 15, 12.0);
+        let earth = calc_heliocentric_earth(jd, false).unwrap();
+        assert!(earth.distance > 0.983 && earth.distance < 1.017,
+                "Earth distance should be ~1 AU, got {:.6}", earth.distance);
+    }
+
+    #[test]
+    fn test_heliocentric_mercury_distance() {
+        // Mercury distance ~0.3-0.47 AU
+        let jd = julday_greg(2024, 1, 1, 12.0);
+        let pos = calc_heliocentric_planet(jd, Planet::Mercury, false).unwrap();
+        assert!(pos.distance > 0.3 && pos.distance < 0.47,
+                "Mercury helio distance should be 0.3-0.47 AU, got {:.6}", pos.distance);
+    }
+
+    #[test]
+    fn test_heliocentric_jupiter_distance() {
+        // Jupiter distance ~4.9-5.5 AU
+        let jd = julday_greg(2024, 1, 1, 12.0);
+        let pos = calc_heliocentric_planet(jd, Planet::Jupiter, false).unwrap();
+        assert!(pos.distance > 4.9 && pos.distance < 5.5,
+                "Jupiter helio distance should be 4.9-5.5 AU, got {:.6}", pos.distance);
+    }
+
+    #[test]
+    fn test_heliocentric_speeds_positive() {
+        // All heliocentric speeds should be positive (no retrograde)
+        let jd = julday_greg(2024, 1, 1, 12.0);
+        for &planet in Planet::heliocentric_planets() {
+            let pos = crate::calc_heliocentric_ut(
+                jd - crate::delta_t(jd), // convert back since calc_heliocentric_ut adds delta_t
+                planet,
+                true,
+            ).unwrap();
+            assert!(pos.speed_longitude > 0.0,
+                    "{:?} heliocentric speed should be positive, got {:.6}", planet, pos.speed_longitude);
+        }
+    }
+
+    #[test]
+    fn test_heliocentric_inner_faster_than_outer() {
+        // Inner planets should have faster heliocentric speed than outer planets
+        let jd = julday_greg(2024, 1, 1, 12.0);
+        let mercury = calc_heliocentric_planet(jd, Planet::Mercury, true).unwrap();
+        let venus = calc_heliocentric_planet(jd, Planet::Venus, true).unwrap();
+        let earth = calc_heliocentric_earth(jd, true).unwrap();
+        let mars = calc_heliocentric_planet(jd, Planet::Mars, true).unwrap();
+        let jupiter = calc_heliocentric_planet(jd, Planet::Jupiter, true).unwrap();
+        let saturn = calc_heliocentric_planet(jd, Planet::Saturn, true).unwrap();
+        let neptune = calc_heliocentric_planet(jd, Planet::Neptune, true).unwrap();
+
+        assert!(mercury.speed_longitude > venus.speed_longitude,
+                "Mercury should be faster than Venus");
+        assert!(venus.speed_longitude > earth.speed_longitude,
+                "Venus should be faster than Earth");
+        assert!(earth.speed_longitude > mars.speed_longitude,
+                "Earth should be faster than Mars");
+        assert!(mars.speed_longitude > jupiter.speed_longitude,
+                "Mars should be faster than Jupiter");
+        assert!(jupiter.speed_longitude > saturn.speed_longitude,
+                "Jupiter should be faster than Saturn");
+        assert!(saturn.speed_longitude > neptune.speed_longitude,
+                "Saturn should be faster than Neptune");
+    }
+
+    #[test]
+    fn test_heliocentric_valid_longitudes() {
+        // All heliocentric longitudes should be in 0-360 range
+        let jd = julday_greg(2024, 1, 1, 12.0);
+        for &planet in &[Planet::Mercury, Planet::Venus, Planet::Mars, Planet::Jupiter,
+                         Planet::Saturn, Planet::Uranus, Planet::Neptune, Planet::Pluto] {
+            let pos = calc_heliocentric_planet(jd, planet, false).unwrap();
+            assert!(pos.longitude >= 0.0 && pos.longitude < 360.0,
+                    "{:?} helio longitude out of range: {:.4}", planet, pos.longitude);
+        }
+        let earth = calc_heliocentric_earth(jd, false).unwrap();
+        assert!(earth.longitude >= 0.0 && earth.longitude < 360.0,
+                "Earth helio longitude out of range: {:.4}", earth.longitude);
     }
 
     #[test]

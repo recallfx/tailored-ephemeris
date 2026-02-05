@@ -17,6 +17,13 @@ export class SE {
     /**
      * @returns {number}
      */
+    static get EARTH() {
+        const ret = wasm.se_EARTH();
+        return ret;
+    }
+    /**
+     * @returns {number}
+     */
     static get FLG_SPEED() {
         const ret = wasm.se_FLG_SPEED();
         return ret;
@@ -258,6 +265,45 @@ export function computeTransitAspectsWithOrbs(jd_transit, natal_positions, orb_c
  */
 export function getAllPlanetaryPositions(jd_ut) {
     const ret = wasm.getAllPlanetaryPositions(jd_ut);
+    return ret;
+}
+
+/**
+ * Get heliocentric chart
+ *
+ * Returns a chart with only planets (no houses, ascendant, or midheaven
+ * since those are geocentric concepts).
+ *
+ * # Arguments
+ * * `jd_ut` - Julian Day in Universal Time
+ *
+ * # Returns
+ * Heliocentric chart with planets array
+ * @param {number} jd_ut
+ * @returns {any}
+ */
+export function getHeliocentricChart(jd_ut) {
+    const ret = wasm.getHeliocentricChart(jd_ut);
+    return ret;
+}
+
+/**
+ * Get heliocentric planetary positions at a given time
+ *
+ * Returns array of planet positions for Earth + Mercury through Pluto (9 planets).
+ * All positions are heliocentric (relative to the Sun).
+ * isRetrograde is always false (no retrograde in heliocentric frame).
+ *
+ * # Arguments
+ * * `jd_ut` - Julian Day in Universal Time
+ *
+ * # Returns
+ * Array of planet positions with sign, degree, speed, and isRetrograde (always false)
+ * @param {number} jd_ut
+ * @returns {any}
+ */
+export function getHeliocentricPositions(jd_ut) {
+    const ret = wasm.getHeliocentricPositions(jd_ut);
     return ret;
 }
 

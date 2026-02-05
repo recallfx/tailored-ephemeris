@@ -41,6 +41,7 @@ pub enum Planet {
     Neptune = 8,
     Pluto = 9,
     TrueNode = 11,
+    Earth = 14,
 }
 
 impl Planet {
@@ -57,6 +58,7 @@ impl Planet {
             8 => Some(Planet::Neptune),
             9 => Some(Planet::Pluto),
             11 => Some(Planet::TrueNode),
+            14 => Some(Planet::Earth),
             _ => None,
         }
     }
@@ -74,6 +76,21 @@ impl Planet {
             Planet::Neptune,
             Planet::Pluto,
             Planet::TrueNode,
+        ]
+    }
+
+    /// Planets valid for heliocentric calculations (Earth + Mercury through Pluto)
+    pub fn heliocentric_planets() -> &'static [Planet] {
+        &[
+            Planet::Earth,
+            Planet::Mercury,
+            Planet::Venus,
+            Planet::Mars,
+            Planet::Jupiter,
+            Planet::Saturn,
+            Planet::Uranus,
+            Planet::Neptune,
+            Planet::Pluto,
         ]
     }
 }
@@ -169,6 +186,21 @@ pub fn calc_ut(jd_ut: f64, planet: Planet, speed: bool) -> Result<Position> {
         Planet::TrueNode => nodes::calc_true_node(jd_et, speed),
         _ => planets::calc_planet(jd_et, planet, speed),
     }
+}
+
+/// Calculate heliocentric planet position
+///
+/// # Arguments
+/// * `jd_ut` - Julian day (Universal Time)
+/// * `planet` - Planet identifier (Earth, Mercury through Pluto; not Sun/Moon/TrueNode)
+/// * `speed` - Whether to calculate speed
+///
+/// # Returns
+/// Position with heliocentric ecliptic longitude, latitude, distance from Sun, and optionally speed.
+/// Speed is always positive (no retrograde in heliocentric frame).
+pub fn calc_heliocentric_ut(jd_ut: f64, planet: Planet, speed: bool) -> Result<Position> {
+    let jd_et = jd_ut + delta_t(jd_ut);
+    planets::calc_heliocentric(jd_et, planet, speed)
 }
 
 /// Calculate house cusps (Placidus system)
