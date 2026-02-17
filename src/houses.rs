@@ -47,17 +47,12 @@ fn calc_mc(armc: f64, eps: f64) -> f64 {
     let (sin_armc, cos_armc) = armc.sin_cos();
     let mut mc = sin_armc.atan2(cos_armc * eps.cos());
 
-    // MC must be in the same hemisphere as ARMC.
-    // First normalize to [0, 2π), then conditionally add π
-    // when cos(ARMC) < 0 to correct the quadrant.
+    // atan2 already resolves the correct quadrant for MC because
+    // cos(ε) is always positive (~0.917), so the sign of
+    // cos(ARMC)*cos(ε) matches cos(ARMC). We only need to
+    // normalize negative results to [0, 2π).
     if mc < 0.0 {
         mc += TWOPI;
-    }
-    if cos_armc < 0.0 {
-        mc += std::f64::consts::PI;
-    }
-    if mc >= TWOPI {
-        mc -= TWOPI;
     }
 
     mc
