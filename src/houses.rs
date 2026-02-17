@@ -45,16 +45,22 @@ pub fn calc_houses_placidus(jd_ut: f64, lat: f64, lon: f64) -> Result<Houses> {
 /// Calculate MC (Medium Coeli / Midheaven)
 fn calc_mc(armc: f64, eps: f64) -> f64 {
     let (sin_armc, cos_armc) = armc.sin_cos();
-    let mc = sin_armc.atan2(cos_armc * eps.cos());
+    let mut mc = sin_armc.atan2(cos_armc * eps.cos());
 
-    // Adjust quadrant
+    // MC must be in the same hemisphere as ARMC.
+    // First normalize to [0, 2π), then conditionally add π
+    // when cos(ARMC) < 0 to correct the quadrant.
     if mc < 0.0 {
-        mc + std::f64::consts::PI
-    } else if cos_armc < 0.0 {
-        mc + std::f64::consts::PI
-    } else {
-        mc
+        mc += TWOPI;
     }
+    if cos_armc < 0.0 {
+        mc += std::f64::consts::PI;
+    }
+    if mc >= TWOPI {
+        mc -= TWOPI;
+    }
+
+    mc
 }
 
 /// Calculate Ascendant
@@ -68,9 +74,16 @@ fn calc_ascendant(armc: f64, lat: f64, eps: f64) -> f64 {
 
     let mut asc = y.atan2(x);
 
-    // Adjust to correct quadrant (ASC should be opposite to ARMC + 180°)
+    // The ascendant must be in the half of the sky that is rising.
+    // atan2 returns the correct angle modulo π, but can be off by 180°.
+    // Adding π selects the rising point (ascendant) instead of the
+    // setting point (descendant).
+    asc += std::f64::consts::PI;
     if asc < 0.0 {
         asc += TWOPI;
+    }
+    if asc >= TWOPI {
+        asc -= TWOPI;
     }
 
     asc
@@ -211,6 +224,24 @@ mod tests {
         // MC and IC should be opposite
         let ic = deg_norm(houses.mc + 180.0);
         assert!((houses.cusps[4] - ic).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_ascendant_against_reference() {
+        // London, 2000-01-01 12:00 UT
+        // Swiss Ephemeris reference: ASC = 24.01°, MC = 280.47°
+        let jd = julday_greg(2000, 1, 1, 12.0);
+        let houses = calc_houses_placidus(jd, 51.5074, -0.1278).unwrap();
+
+        // ASC should be ~24° (Aries), not ~204° (Libra)
+        assert!((houses.ascendant - 24.01).abs() < 0.5,
+            "ASC was {}°, expected ~24.01°", houses.ascendant);
+
+        // MC should be ~280° (Capricorn), not ~100° (Cancer)
+        // Tolerance of 1.0° accounts for VSOP87 vs Swiss Ephemeris differences
+        // in obliquity and delta-T models
+        assert!((houses.mc - 280.47).abs() < 1.0,
+            "MC was {}°, expected ~280.47°", houses.mc);
     }
 
     #[test]
