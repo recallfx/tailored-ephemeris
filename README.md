@@ -135,8 +135,6 @@ Validated against Swiss Ephemeris (pyswisseph v2.10.03) across 4 geographic loca
 | Vertex | <0.01° |
 | All 12 cusps | <0.01° |
 
-The Placidus implementation uses the same algorithm as Swiss Ephemeris (`swehouse.c`): iterative pole-height refinement via oblique ascension functions (`Asc1`/`Asc2`), with ascensional difference division for the proportional semi-arc condition.
-
 Sufficient for all astrological applications.
 
 ## License
