@@ -269,6 +269,30 @@ export function getAllPlanetaryPositions(jd_ut) {
 }
 
 /**
+ * Get eclipse type at a given moment
+ *
+ * # Arguments
+ * * `jd_ut` - Julian Day in Universal Time
+ *
+ * # Returns
+ * "solar_eclipse", "lunar_eclipse", or "none"
+ * @param {number} jd_ut
+ * @returns {string}
+ */
+export function getEclipseType(jd_ut) {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+        const ret = wasm.getEclipseType(jd_ut);
+        deferred1_0 = ret[0];
+        deferred1_1 = ret[1];
+        return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+        wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+}
+
+/**
  * Get heliocentric chart
  *
  * Returns a chart with only planets (no houses, ascendant, or midheaven
@@ -423,6 +447,22 @@ export function getSignFromLongitude(longitude) {
     } finally {
         wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
     }
+}
+
+/**
+ * Check if a given moment is near a solar or lunar eclipse
+ *
+ * # Arguments
+ * * `jd_ut` - Julian Day in Universal Time
+ *
+ * # Returns
+ * true if eclipse conditions are met
+ * @param {number} jd_ut
+ * @returns {boolean}
+ */
+export function isEclipse(jd_ut) {
+    const ret = wasm.isEclipse(jd_ut);
+    return ret !== 0;
 }
 
 /**

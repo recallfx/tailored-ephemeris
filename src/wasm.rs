@@ -2,10 +2,10 @@
 //!
 //! Provides a JavaScript-compatible API matching sweph-wasm interface.
 
-use wasm_bindgen::prelude::*;
 use serde::{Deserialize, Serialize};
+use wasm_bindgen::prelude::*;
 
-use crate::{calc_ut, calc_houses, julian, Planet, Position, Houses, constants, astrology};
+use crate::{astrology, calc_houses, calc_ut, constants, julian, Houses, Planet, Position};
 
 /// Planet position result for JavaScript
 #[derive(Serialize, Deserialize)]
@@ -171,52 +171,84 @@ pub struct SE {
 #[allow(non_snake_case)]
 impl SE {
     #[wasm_bindgen(getter)]
-    pub fn SUN() -> i32 { 0 }
+    pub fn SUN() -> i32 {
+        0
+    }
 
     #[wasm_bindgen(getter)]
-    pub fn MOON() -> i32 { 1 }
+    pub fn MOON() -> i32 {
+        1
+    }
 
     #[wasm_bindgen(getter)]
-    pub fn MERCURY() -> i32 { 2 }
+    pub fn MERCURY() -> i32 {
+        2
+    }
 
     #[wasm_bindgen(getter)]
-    pub fn VENUS() -> i32 { 3 }
+    pub fn VENUS() -> i32 {
+        3
+    }
 
     #[wasm_bindgen(getter)]
-    pub fn MARS() -> i32 { 4 }
+    pub fn MARS() -> i32 {
+        4
+    }
 
     #[wasm_bindgen(getter)]
-    pub fn JUPITER() -> i32 { 5 }
+    pub fn JUPITER() -> i32 {
+        5
+    }
 
     #[wasm_bindgen(getter)]
-    pub fn SATURN() -> i32 { 6 }
+    pub fn SATURN() -> i32 {
+        6
+    }
 
     #[wasm_bindgen(getter)]
-    pub fn URANUS() -> i32 { 7 }
+    pub fn URANUS() -> i32 {
+        7
+    }
 
     #[wasm_bindgen(getter)]
-    pub fn NEPTUNE() -> i32 { 8 }
+    pub fn NEPTUNE() -> i32 {
+        8
+    }
 
     #[wasm_bindgen(getter)]
-    pub fn PLUTO() -> i32 { 9 }
+    pub fn PLUTO() -> i32 {
+        9
+    }
 
     #[wasm_bindgen(getter)]
-    pub fn MEAN_NODE() -> i32 { 10 }
+    pub fn MEAN_NODE() -> i32 {
+        10
+    }
 
     #[wasm_bindgen(getter)]
-    pub fn TRUE_NODE() -> i32 { 11 }
+    pub fn TRUE_NODE() -> i32 {
+        11
+    }
 
     #[wasm_bindgen(getter)]
-    pub fn EARTH() -> i32 { 14 }
+    pub fn EARTH() -> i32 {
+        14
+    }
 
     #[wasm_bindgen(getter)]
-    pub fn GREG_CAL() -> i32 { 1 }
+    pub fn GREG_CAL() -> i32 {
+        1
+    }
 
     #[wasm_bindgen(getter)]
-    pub fn JUL_CAL() -> i32 { 0 }
+    pub fn JUL_CAL() -> i32 {
+        0
+    }
 
     #[wasm_bindgen(getter)]
-    pub fn FLG_SPEED() -> i32 { 256 }
+    pub fn FLG_SPEED() -> i32 {
+        256
+    }
 }
 
 /// Batch calculation for multiple planets
@@ -346,10 +378,18 @@ pub struct JsOrbConfig {
     pub quintile: f64,
 }
 
-fn default_major_orb() -> f64 { 8.0 }
-fn default_sextile_orb() -> f64 { 6.0 }
-fn default_quincunx_orb() -> f64 { 5.0 }
-fn default_minor_orb() -> f64 { 4.0 }
+fn default_major_orb() -> f64 {
+    8.0
+}
+fn default_sextile_orb() -> f64 {
+    6.0
+}
+fn default_quincunx_orb() -> f64 {
+    5.0
+}
+fn default_minor_orb() -> f64 {
+    4.0
+}
 
 impl From<JsOrbConfig> for astrology::OrbConfig {
     fn from(js: JsOrbConfig) -> Self {
@@ -382,16 +422,17 @@ pub struct JsHeliocentricChart {
 pub fn get_all_planetary_positions(jd_ut: f64) -> JsValue {
     match astrology::get_all_planetary_positions(jd_ut) {
         Ok(positions) => {
-            let js_positions: Vec<JsPlanetPosition> = positions.iter().map(|p| {
-                JsPlanetPosition {
+            let js_positions: Vec<JsPlanetPosition> = positions
+                .iter()
+                .map(|p| JsPlanetPosition {
                     planet_key: p.planet_key.to_string(),
                     longitude: p.longitude,
                     sign_key: p.sign_key.to_string(),
                     sign_degree: p.sign_degree,
                     is_retrograde: p.is_retrograde,
                     speed: p.speed,
-                }
-            }).collect();
+                })
+                .collect();
             serde_wasm_bindgen::to_value(&js_positions).unwrap_or(JsValue::NULL)
         }
         Err(_) => JsValue::NULL,
@@ -412,20 +453,28 @@ pub fn get_natal_chart(jd_ut: f64, lat: f64, lon: f64) -> JsValue {
     match astrology::get_natal_chart(jd_ut, lat, lon) {
         Ok(chart) => {
             let js_chart = JsNatalChart {
-                planets: chart.planets.iter().map(|p| JsPlanetPosition {
-                    planet_key: p.planet_key.to_string(),
-                    longitude: p.longitude,
-                    sign_key: p.sign_key.to_string(),
-                    sign_degree: p.sign_degree,
-                    is_retrograde: p.is_retrograde,
-                    speed: p.speed,
-                }).collect(),
-                houses: chart.houses.iter().map(|h| JsHouseCusp {
-                    house_number: h.house_number,
-                    cusp_longitude: h.cusp_longitude,
-                    sign_key: h.sign_key.to_string(),
-                    sign_degree: h.sign_degree,
-                }).collect(),
+                planets: chart
+                    .planets
+                    .iter()
+                    .map(|p| JsPlanetPosition {
+                        planet_key: p.planet_key.to_string(),
+                        longitude: p.longitude,
+                        sign_key: p.sign_key.to_string(),
+                        sign_degree: p.sign_degree,
+                        is_retrograde: p.is_retrograde,
+                        speed: p.speed,
+                    })
+                    .collect(),
+                houses: chart
+                    .houses
+                    .iter()
+                    .map(|h| JsHouseCusp {
+                        house_number: h.house_number,
+                        cusp_longitude: h.cusp_longitude,
+                        sign_key: h.sign_key.to_string(),
+                        sign_degree: h.sign_degree,
+                    })
+                    .collect(),
                 ascendant: chart.ascendant,
                 midheaven: chart.midheaven,
                 north_node: JsNorthNode {
@@ -516,6 +565,33 @@ pub fn get_moon_phase(jd_ut: f64) -> String {
     }
 }
 
+/// Get eclipse type at a given moment
+///
+/// # Arguments
+/// * `jd_ut` - Julian Day in Universal Time
+///
+/// # Returns
+/// "solar_eclipse", "lunar_eclipse", or "none"
+#[wasm_bindgen(js_name = getEclipseType)]
+pub fn get_eclipse_type(jd_ut: f64) -> String {
+    match astrology::get_eclipse_type(jd_ut) {
+        Ok(Some(kind)) => kind.as_str().to_string(),
+        _ => "none".to_string(),
+    }
+}
+
+/// Check if a given moment is near a solar or lunar eclipse
+///
+/// # Arguments
+/// * `jd_ut` - Julian Day in Universal Time
+///
+/// # Returns
+/// true if eclipse conditions are met
+#[wasm_bindgen(js_name = isEclipse)]
+pub fn is_eclipse(jd_ut: f64) -> bool {
+    astrology::is_eclipse(jd_ut).unwrap_or(false)
+}
+
 /// Get zodiac sign from longitude
 ///
 /// # Arguments
@@ -578,8 +654,9 @@ pub fn compute_transit_aspects(jd_transit: f64, natal_positions: JsValue) -> JsV
     };
 
     // Convert to internal format
-    let natal_internal: Vec<astrology::PlanetPosition> = natal.iter().map(|p| {
-        astrology::PlanetPosition {
+    let natal_internal: Vec<astrology::PlanetPosition> = natal
+        .iter()
+        .map(|p| astrology::PlanetPosition {
             planet_key: match p.planet_key.as_str() {
                 "sun" => "sun",
                 "moon" => "moon",
@@ -612,20 +689,23 @@ pub fn compute_transit_aspects(jd_transit: f64, natal_positions: JsValue) -> JsV
             sign_degree: p.sign_degree,
             is_retrograde: p.is_retrograde,
             speed: p.speed,
-        }
-    }).collect();
+        })
+        .collect();
 
     // Compute aspects
     let aspects = astrology::compute_aspects(&transit_positions, &natal_internal);
 
     // Convert to JS format
-    let js_aspects: Vec<JsAspect> = aspects.iter().map(|a| JsAspect {
-        planet1_key: a.planet1_key.to_string(),
-        planet2_key: a.planet2_key.to_string(),
-        aspect_key: a.aspect_type.as_str().to_string(),
-        orb: a.orb,
-        is_applying: a.is_applying,
-    }).collect();
+    let js_aspects: Vec<JsAspect> = aspects
+        .iter()
+        .map(|a| JsAspect {
+            planet1_key: a.planet1_key.to_string(),
+            planet2_key: a.planet2_key.to_string(),
+            aspect_key: a.aspect_type.as_str().to_string(),
+            orb: a.orb,
+            is_applying: a.is_applying,
+        })
+        .collect();
 
     serde_wasm_bindgen::to_value(&js_aspects).unwrap_or(JsValue::NULL)
 }
@@ -646,13 +726,16 @@ pub fn compute_mundane_aspects(jd_ut: f64) -> JsValue {
 
     let aspects = astrology::compute_aspects(&positions, &positions);
 
-    let js_aspects: Vec<JsAspect> = aspects.iter().map(|a| JsAspect {
-        planet1_key: a.planet1_key.to_string(),
-        planet2_key: a.planet2_key.to_string(),
-        aspect_key: a.aspect_type.as_str().to_string(),
-        orb: a.orb,
-        is_applying: a.is_applying,
-    }).collect();
+    let js_aspects: Vec<JsAspect> = aspects
+        .iter()
+        .map(|a| JsAspect {
+            planet1_key: a.planet1_key.to_string(),
+            planet2_key: a.planet2_key.to_string(),
+            aspect_key: a.aspect_type.as_str().to_string(),
+            orb: a.orb,
+            is_applying: a.is_applying,
+        })
+        .collect();
 
     serde_wasm_bindgen::to_value(&js_aspects).unwrap_or(JsValue::NULL)
 }
@@ -683,7 +766,11 @@ pub fn compute_mundane_aspects(jd_ut: f64) -> JsValue {
 /// }
 /// ```
 #[wasm_bindgen(js_name = computeTransitAspectsWithOrbs)]
-pub fn compute_transit_aspects_with_orbs(jd_transit: f64, natal_positions: JsValue, orb_config: JsValue) -> JsValue {
+pub fn compute_transit_aspects_with_orbs(
+    jd_transit: f64,
+    natal_positions: JsValue,
+    orb_config: JsValue,
+) -> JsValue {
     // Get current transit positions
     let transit_positions = match astrology::get_all_planetary_positions(jd_transit) {
         Ok(p) => p,
@@ -704,8 +791,9 @@ pub fn compute_transit_aspects_with_orbs(jd_transit: f64, natal_positions: JsVal
     let orbs: astrology::OrbConfig = js_orbs.into();
 
     // Convert to internal format
-    let natal_internal: Vec<astrology::PlanetPosition> = natal.iter().map(|p| {
-        astrology::PlanetPosition {
+    let natal_internal: Vec<astrology::PlanetPosition> = natal
+        .iter()
+        .map(|p| astrology::PlanetPosition {
             planet_key: match p.planet_key.as_str() {
                 "sun" => "sun",
                 "moon" => "moon",
@@ -738,20 +826,23 @@ pub fn compute_transit_aspects_with_orbs(jd_transit: f64, natal_positions: JsVal
             sign_degree: p.sign_degree,
             is_retrograde: p.is_retrograde,
             speed: p.speed,
-        }
-    }).collect();
+        })
+        .collect();
 
     // Compute aspects with custom orbs
     let aspects = astrology::compute_aspects_with_orbs(&transit_positions, &natal_internal, &orbs);
 
     // Convert to JS format
-    let js_aspects: Vec<JsAspect> = aspects.iter().map(|a| JsAspect {
-        planet1_key: a.planet1_key.to_string(),
-        planet2_key: a.planet2_key.to_string(),
-        aspect_key: a.aspect_type.as_str().to_string(),
-        orb: a.orb,
-        is_applying: a.is_applying,
-    }).collect();
+    let js_aspects: Vec<JsAspect> = aspects
+        .iter()
+        .map(|a| JsAspect {
+            planet1_key: a.planet1_key.to_string(),
+            planet2_key: a.planet2_key.to_string(),
+            aspect_key: a.aspect_type.as_str().to_string(),
+            orb: a.orb,
+            is_applying: a.is_applying,
+        })
+        .collect();
 
     serde_wasm_bindgen::to_value(&js_aspects).unwrap_or(JsValue::NULL)
 }
@@ -780,13 +871,16 @@ pub fn compute_mundane_aspects_with_orbs(jd_ut: f64, orb_config: JsValue) -> JsV
 
     let aspects = astrology::compute_aspects_with_orbs(&positions, &positions, &orbs);
 
-    let js_aspects: Vec<JsAspect> = aspects.iter().map(|a| JsAspect {
-        planet1_key: a.planet1_key.to_string(),
-        planet2_key: a.planet2_key.to_string(),
-        aspect_key: a.aspect_type.as_str().to_string(),
-        orb: a.orb,
-        is_applying: a.is_applying,
-    }).collect();
+    let js_aspects: Vec<JsAspect> = aspects
+        .iter()
+        .map(|a| JsAspect {
+            planet1_key: a.planet1_key.to_string(),
+            planet2_key: a.planet2_key.to_string(),
+            aspect_key: a.aspect_type.as_str().to_string(),
+            orb: a.orb,
+            is_applying: a.is_applying,
+        })
+        .collect();
 
     serde_wasm_bindgen::to_value(&js_aspects).unwrap_or(JsValue::NULL)
 }
@@ -802,7 +896,12 @@ pub fn compute_mundane_aspects_with_orbs(jd_ut: f64, orb_config: JsValue) -> JsV
 /// # Returns
 /// Array of aspects between natal planets
 #[wasm_bindgen(js_name = computeNatalAspectsWithOrbs)]
-pub fn compute_natal_aspects_with_orbs(jd_ut: f64, lat: f64, lon: f64, orb_config: JsValue) -> JsValue {
+pub fn compute_natal_aspects_with_orbs(
+    jd_ut: f64,
+    lat: f64,
+    lon: f64,
+    orb_config: JsValue,
+) -> JsValue {
     let chart = match astrology::get_natal_chart(jd_ut, lat, lon) {
         Ok(c) => c,
         Err(_) => return JsValue::NULL,
@@ -817,13 +916,16 @@ pub fn compute_natal_aspects_with_orbs(jd_ut: f64, lat: f64, lon: f64, orb_confi
 
     let aspects = astrology::compute_aspects_with_orbs(&chart.planets, &chart.planets, &orbs);
 
-    let js_aspects: Vec<JsAspect> = aspects.iter().map(|a| JsAspect {
-        planet1_key: a.planet1_key.to_string(),
-        planet2_key: a.planet2_key.to_string(),
-        aspect_key: a.aspect_type.as_str().to_string(),
-        orb: a.orb,
-        is_applying: a.is_applying,
-    }).collect();
+    let js_aspects: Vec<JsAspect> = aspects
+        .iter()
+        .map(|a| JsAspect {
+            planet1_key: a.planet1_key.to_string(),
+            planet2_key: a.planet2_key.to_string(),
+            aspect_key: a.aspect_type.as_str().to_string(),
+            orb: a.orb,
+            is_applying: a.is_applying,
+        })
+        .collect();
 
     serde_wasm_bindgen::to_value(&js_aspects).unwrap_or(JsValue::NULL)
 }
@@ -880,14 +982,16 @@ pub fn get_planet_in_house(planet_longitude: f64, house_cusps: &[f64]) -> u8 {
         return 1;
     }
 
-    let cusps: Vec<astrology::HouseCusp> = house_cusps.iter().enumerate().map(|(i, &lon)| {
-        astrology::HouseCusp {
+    let cusps: Vec<astrology::HouseCusp> = house_cusps
+        .iter()
+        .enumerate()
+        .map(|(i, &lon)| astrology::HouseCusp {
             house_number: (i + 1) as u8,
             cusp_longitude: lon,
             sign_key: astrology::get_sign_from_longitude(lon),
             sign_degree: astrology::get_sign_degree(lon),
-        }
-    }).collect();
+        })
+        .collect();
 
     astrology::get_planet_in_house(planet_longitude, &cusps)
 }

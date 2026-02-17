@@ -16,7 +16,7 @@ Minimal astronomical ephemeris calculations for horoscope generation. Pure Rust,
 | **Planets** | Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto |
 | **Points** | True North Node |
 | **Houses** | Placidus system |
-| **Astrology** | Zodiac signs, moon phases, aspects, planetary hours, void-of-course Moon |
+| **Astrology** | Zodiac signs, moon phases, eclipses, aspects, planetary hours, void-of-course Moon |
 
 ## Installation
 
@@ -73,6 +73,9 @@ let chart = get_natal_chart(jd, 47.38, 8.54)?;
 // Moon phase
 let phase = calculate_moon_phase(jd)?;
 
+// Eclipse detection
+let eclipse = get_eclipse_type(jd)?; // Some(Solar) / Some(Lunar) / None
+
 // Planetary positions with zodiac signs
 let positions = get_all_planetary_positions(jd)?;
 for p in positions {
@@ -104,6 +107,8 @@ swe_houses(jd, lat, lon, hsys): { cusps: number[], ascmc: number[] }
 getAllPlanetaryPositions(jd): PlanetPosition[]
 getNatalChart(jd, lat, lon): NatalChart
 getMoonPhase(jd): string
+getEclipseType(jd): string
+isEclipse(jd): boolean
 computeTransitAspects(jd, natalPositions): Aspect[]
 computeMundaneAspects(jd): Aspect[]
 isVoidOfCourseMoon(jd): boolean

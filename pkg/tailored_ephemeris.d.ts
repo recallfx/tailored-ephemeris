@@ -119,6 +119,17 @@ export function computeTransitAspectsWithOrbs(jd_transit: number, natal_position
 export function getAllPlanetaryPositions(jd_ut: number): any;
 
 /**
+ * Get eclipse type at a given moment
+ *
+ * # Arguments
+ * * `jd_ut` - Julian Day in Universal Time
+ *
+ * # Returns
+ * "solar_eclipse", "lunar_eclipse", or "none"
+ */
+export function getEclipseType(jd_ut: number): string;
+
+/**
  * Get heliocentric chart
  *
  * Returns a chart with only planets (no houses, ascendant, or midheaven
@@ -207,6 +218,17 @@ export function getPlanetaryHourRuler(year: number, month: number, day: number, 
  * Sign key: "aries", "taurus", etc.
  */
 export function getSignFromLongitude(longitude: number): string;
+
+/**
+ * Check if a given moment is near a solar or lunar eclipse
+ *
+ * # Arguments
+ * * `jd_ut` - Julian Day in Universal Time
+ *
+ * # Returns
+ * true if eclipse conditions are met
+ */
+export function isEclipse(jd_ut: number): boolean;
 
 /**
  * Check if Moon is void-of-course
@@ -307,43 +329,45 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
-    readonly __wbg_se_free: (a: number, b: number) => void;
-    readonly calculateChart: (a: number, b: number, c: number, d: number, e: number, f: number) => any;
-    readonly computeMundaneAspects: (a: number) => any;
-    readonly computeMundaneAspectsWithOrbs: (a: number, b: any) => any;
-    readonly computeNatalAspectsWithOrbs: (a: number, b: number, c: number, d: any) => any;
-    readonly computeTransitAspects: (a: number, b: any) => any;
-    readonly computeTransitAspectsWithOrbs: (a: number, b: any, c: any) => any;
-    readonly getAllPlanetaryPositions: (a: number) => any;
-    readonly getHeliocentricChart: (a: number) => any;
-    readonly getHeliocentricPositions: (a: number) => any;
-    readonly getMoonPhase: (a: number) => [number, number];
-    readonly getNatalChart: (a: number, b: number, c: number) => any;
-    readonly getPlanetInHouse: (a: number, b: number, c: number) => number;
-    readonly getPlanetaryHourRuler: (a: number, b: number, c: number, d: number) => [number, number];
-    readonly getSignFromLongitude: (a: number) => [number, number];
-    readonly isVoidOfCourseMoon: (a: number) => number;
-    readonly se_EARTH: () => number;
-    readonly se_FLG_SPEED: () => number;
-    readonly se_GREG_CAL: () => number;
-    readonly se_JUL_CAL: () => number;
-    readonly se_JUPITER: () => number;
-    readonly se_MARS: () => number;
-    readonly se_MEAN_NODE: () => number;
-    readonly se_MERCURY: () => number;
-    readonly se_NEPTUNE: () => number;
-    readonly se_PLUTO: () => number;
-    readonly se_SATURN: () => number;
-    readonly se_TRUE_NODE: () => number;
-    readonly se_URANUS: () => number;
-    readonly se_VENUS: () => number;
-    readonly swe_calc_ut: (a: number, b: number, c: number) => any;
-    readonly swe_calc_ut_all: (a: number, b: number) => any;
-    readonly swe_calc_ut_batch: (a: number, b: number, c: number, d: number) => any;
-    readonly swe_get_planet_name: (a: number) => [number, number];
-    readonly swe_houses: (a: number, b: number, c: number, d: number, e: number) => any;
     readonly swe_julday: (a: number, b: number, c: number, d: number, e: number) => number;
     readonly swe_revjul: (a: number, b: number) => any;
+    readonly swe_calc_ut: (a: number, b: number, c: number) => any;
+    readonly swe_houses: (a: number, b: number, c: number, d: number, e: number) => any;
+    readonly swe_get_planet_name: (a: number) => [number, number];
+    readonly __wbg_se_free: (a: number, b: number) => void;
+    readonly se_MERCURY: () => number;
+    readonly se_VENUS: () => number;
+    readonly se_MARS: () => number;
+    readonly se_JUPITER: () => number;
+    readonly se_SATURN: () => number;
+    readonly se_URANUS: () => number;
+    readonly se_NEPTUNE: () => number;
+    readonly se_PLUTO: () => number;
+    readonly se_MEAN_NODE: () => number;
+    readonly se_TRUE_NODE: () => number;
+    readonly se_EARTH: () => number;
+    readonly se_GREG_CAL: () => number;
+    readonly se_JUL_CAL: () => number;
+    readonly se_FLG_SPEED: () => number;
+    readonly swe_calc_ut_batch: (a: number, b: number, c: number, d: number) => any;
+    readonly swe_calc_ut_all: (a: number, b: number) => any;
+    readonly getAllPlanetaryPositions: (a: number) => any;
+    readonly getNatalChart: (a: number, b: number, c: number) => any;
+    readonly getHeliocentricPositions: (a: number) => any;
+    readonly getHeliocentricChart: (a: number) => any;
+    readonly getMoonPhase: (a: number) => [number, number];
+    readonly getEclipseType: (a: number) => [number, number];
+    readonly isEclipse: (a: number) => number;
+    readonly getSignFromLongitude: (a: number) => [number, number];
+    readonly isVoidOfCourseMoon: (a: number) => number;
+    readonly getPlanetaryHourRuler: (a: number, b: number, c: number, d: number) => [number, number];
+    readonly computeTransitAspects: (a: number, b: any) => any;
+    readonly computeMundaneAspects: (a: number) => any;
+    readonly computeTransitAspectsWithOrbs: (a: number, b: any, c: any) => any;
+    readonly computeMundaneAspectsWithOrbs: (a: number, b: any) => any;
+    readonly computeNatalAspectsWithOrbs: (a: number, b: number, c: number, d: any) => any;
+    readonly calculateChart: (a: number, b: number, c: number, d: number, e: number, f: number) => any;
+    readonly getPlanetInHouse: (a: number, b: number, c: number) => number;
     readonly se_MOON: () => number;
     readonly se_SUN: () => number;
     readonly __wbindgen_malloc: (a: number, b: number) => number;

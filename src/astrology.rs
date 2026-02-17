@@ -3,22 +3,32 @@
 //! This module provides higher-level astrological calculations:
 //! - Zodiac sign from longitude
 //! - Moon phases
+//! - Solar and lunar eclipse detection
 //! - Aspects between planets
 //! - Planetary hours
 //! - Void-of-course Moon detection
 
-use crate::{calc_ut, calc_heliocentric_ut, calc_houses, Planet, Result};
+use crate::{calc_heliocentric_ut, calc_houses, calc_ut, Planet, Result};
 
 /// Zodiac signs in order (0 = Aries, 11 = Pisces)
 pub const ZODIAC_SIGNS: [&str; 12] = [
-    "aries", "taurus", "gemini", "cancer", "leo", "virgo",
-    "libra", "scorpio", "sagittarius", "capricorn", "aquarius", "pisces",
+    "aries",
+    "taurus",
+    "gemini",
+    "cancer",
+    "leo",
+    "virgo",
+    "libra",
+    "scorpio",
+    "sagittarius",
+    "capricorn",
+    "aquarius",
+    "pisces",
 ];
 
 /// Planet keys matching the order used in the API
 pub const PLANET_KEYS: [&str; 10] = [
-    "sun", "moon", "mercury", "venus", "mars",
-    "jupiter", "saturn", "uranus", "neptune", "pluto",
+    "sun", "moon", "mercury", "venus", "mars", "jupiter", "saturn", "uranus", "neptune", "pluto",
 ];
 
 /// Moon phase keys
@@ -47,6 +57,32 @@ impl MoonPhase {
             MoonPhase::WaningCrescent => "waning_crescent",
         }
     }
+}
+
+/// Eclipse types significant in astrology
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EclipseType {
+    Solar,
+    Lunar,
+}
+
+impl EclipseType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            EclipseType::Solar => "solar_eclipse",
+            EclipseType::Lunar => "lunar_eclipse",
+        }
+    }
+}
+
+/// Eclipse detection details
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct EclipseInfo {
+    pub eclipse_type: EclipseType,
+    /// Absolute Sun-Moon orb to conjunction/opposition in degrees
+    pub sun_moon_orb: f64,
+    /// Angular distance from Moon to nearest lunar node in degrees
+    pub node_orb: f64,
 }
 
 /// Aspect types
@@ -221,12 +257,12 @@ pub struct NatalChart {
 
 /// Chaldean order for planetary hours
 const CHALDEAN_ORDER: [&str; 7] = [
-    "saturn", "jupiter", "mars", "sun", "venus", "mercury", "moon"
+    "saturn", "jupiter", "mars", "sun", "venus", "mercury", "moon",
 ];
 
 /// Day rulers (0 = Sunday)
 const DAY_RULERS: [&str; 7] = [
-    "sun", "moon", "mars", "mercury", "jupiter", "venus", "saturn"
+    "sun", "moon", "mars", "mercury", "jupiter", "venus", "saturn",
 ];
 
 // ============================================================================
@@ -236,7 +272,9 @@ const DAY_RULERS: [&str; 7] = [
 /// Get zodiac sign from ecliptic longitude
 pub fn get_sign_from_longitude(longitude: f64) -> &'static str {
     let mut lon = longitude % 360.0;
-    if lon < 0.0 { lon += 360.0; }
+    if lon < 0.0 {
+        lon += 360.0;
+    }
     let index = (lon / 30.0) as usize % 12;
     ZODIAC_SIGNS[index]
 }
@@ -244,24 +282,39 @@ pub fn get_sign_from_longitude(longitude: f64) -> &'static str {
 /// Get degree within sign (0-30)
 pub fn get_sign_degree(longitude: f64) -> f64 {
     let mut lon = longitude % 360.0;
-    if lon < 0.0 { lon += 360.0; }
+    if lon < 0.0 {
+        lon += 360.0;
+    }
     lon % 30.0
 }
 
 /// Calculate moon phase from Sun and Moon longitudes
 pub fn get_moon_phase(sun_longitude: f64, moon_longitude: f64) -> MoonPhase {
     let mut diff = moon_longitude - sun_longitude;
-    if diff < 0.0 { diff += 360.0; }
-    if diff >= 360.0 { diff -= 360.0; }
+    if diff < 0.0 {
+        diff += 360.0;
+    }
+    if diff >= 360.0 {
+        diff -= 360.0;
+    }
 
-    if diff < 45.0 { MoonPhase::NewMoon }
-    else if diff < 90.0 { MoonPhase::WaxingCrescent }
-    else if diff < 135.0 { MoonPhase::FirstQuarter }
-    else if diff < 180.0 { MoonPhase::WaxingGibbous }
-    else if diff < 225.0 { MoonPhase::FullMoon }
-    else if diff < 270.0 { MoonPhase::WaningGibbous }
-    else if diff < 315.0 { MoonPhase::LastQuarter }
-    else { MoonPhase::WaningCrescent }
+    if diff < 45.0 {
+        MoonPhase::NewMoon
+    } else if diff < 90.0 {
+        MoonPhase::WaxingCrescent
+    } else if diff < 135.0 {
+        MoonPhase::FirstQuarter
+    } else if diff < 180.0 {
+        MoonPhase::WaxingGibbous
+    } else if diff < 225.0 {
+        MoonPhase::FullMoon
+    } else if diff < 270.0 {
+        MoonPhase::WaningGibbous
+    } else if diff < 315.0 {
+        MoonPhase::LastQuarter
+    } else {
+        MoonPhase::WaningCrescent
+    }
 }
 
 /// Calculate moon phase for a given date
@@ -269,6 +322,68 @@ pub fn calculate_moon_phase(jd: f64) -> Result<MoonPhase> {
     let sun = calc_ut(jd, Planet::Sun, false)?;
     let moon = calc_ut(jd, Planet::Moon, false)?;
     Ok(get_moon_phase(sun.longitude, moon.longitude))
+}
+
+const ECLIPSE_SYZYGY_ORB: f64 = 12.0;
+const SOLAR_ECLIPSE_NODE_ORB: f64 = 18.0;
+const LUNAR_ECLIPSE_NODE_ORB: f64 = 12.5;
+
+fn angular_distance(lon1: f64, lon2: f64) -> f64 {
+    let mut diff = (lon1 - lon2).abs() % 360.0;
+    if diff > 180.0 {
+        diff = 360.0 - diff;
+    }
+    diff
+}
+
+fn distance_to_nearest_node(moon_longitude: f64, north_node_longitude: f64) -> f64 {
+    let south_node_longitude = (north_node_longitude + 180.0) % 360.0;
+    angular_distance(moon_longitude, north_node_longitude)
+        .min(angular_distance(moon_longitude, south_node_longitude))
+}
+
+/// Detect whether a given moment is near a solar or lunar eclipse.
+///
+/// Uses a simple astrology-oriented rule set:
+/// - Solar eclipse: New Moon + Moon near node
+/// - Lunar eclipse: Full Moon + Moon near node
+pub fn detect_eclipse(jd: f64) -> Result<Option<EclipseInfo>> {
+    let sun = calc_ut(jd, Planet::Sun, false)?;
+    let moon = calc_ut(jd, Planet::Moon, false)?;
+    let node = calc_ut(jd, Planet::TrueNode, false)?;
+
+    let sun_moon_angle = angular_distance(sun.longitude, moon.longitude);
+    let conjunction_orb = sun_moon_angle;
+    let opposition_orb = (sun_moon_angle - 180.0).abs();
+    let node_orb = distance_to_nearest_node(moon.longitude, node.longitude);
+
+    if conjunction_orb <= ECLIPSE_SYZYGY_ORB && node_orb <= SOLAR_ECLIPSE_NODE_ORB {
+        return Ok(Some(EclipseInfo {
+            eclipse_type: EclipseType::Solar,
+            sun_moon_orb: conjunction_orb,
+            node_orb,
+        }));
+    }
+
+    if opposition_orb <= ECLIPSE_SYZYGY_ORB && node_orb <= LUNAR_ECLIPSE_NODE_ORB {
+        return Ok(Some(EclipseInfo {
+            eclipse_type: EclipseType::Lunar,
+            sun_moon_orb: opposition_orb,
+            node_orb,
+        }));
+    }
+
+    Ok(None)
+}
+
+/// Get eclipse type at a given moment, if any.
+pub fn get_eclipse_type(jd: f64) -> Result<Option<EclipseType>> {
+    Ok(detect_eclipse(jd)?.map(|e| e.eclipse_type))
+}
+
+/// True when the moment is near a solar or lunar eclipse.
+pub fn is_eclipse(jd: f64) -> Result<bool> {
+    Ok(detect_eclipse(jd)?.is_some())
 }
 
 /// Get planetary hour ruler for a given date/time
@@ -288,7 +403,10 @@ pub fn get_planetary_hour_ruler(year: i32, month: i32, day: i32, hour: u32) -> &
     let day_of_week = ((h + 6) % 7) as usize; // Convert to 0=Sunday
 
     let day_ruler = DAY_RULERS[day_of_week];
-    let start_index = CHALDEAN_ORDER.iter().position(|&p| p == day_ruler).unwrap_or(0);
+    let start_index = CHALDEAN_ORDER
+        .iter()
+        .position(|&p| p == day_ruler)
+        .unwrap_or(0);
     let hour_index = (start_index + hour as usize) % 7;
 
     CHALDEAN_ORDER[hour_index]
@@ -296,8 +414,7 @@ pub fn get_planetary_hour_ruler(year: i32, month: i32, day: i32, hour: u32) -> &
 
 /// Check if two angles form an aspect within orb
 fn check_aspect(lon1: f64, lon2: f64, aspect: AspectType, orb: f64) -> Option<f64> {
-    let mut diff = (lon1 - lon2).abs();
-    if diff > 180.0 { diff = 360.0 - diff; }
+    let diff = angular_distance(lon1, lon2);
 
     let actual_orb = (diff - aspect.angle()).abs();
     if actual_orb <= orb {
@@ -325,7 +442,8 @@ pub fn compute_aspects_with_orbs(
 
             for &aspect_type in AspectType::all() {
                 let orb = orb_config.get_orb(aspect_type);
-                if let Some(actual_orb) = check_aspect(p1.longitude, p2.longitude, aspect_type, orb) {
+                if let Some(actual_orb) = check_aspect(p1.longitude, p2.longitude, aspect_type, orb)
+                {
                     // Determine if applying or separating
                     let relative_speed = if same_chart {
                         p1.speed - p2.speed
@@ -334,11 +452,12 @@ pub fn compute_aspects_with_orbs(
                     };
 
                     let mut diff = (p1.longitude - p2.longitude).abs();
-                    if diff > 180.0 { diff = 360.0 - diff; }
+                    if diff > 180.0 {
+                        diff = 360.0 - diff;
+                    }
 
-                    let is_applying =
-                        (diff > aspect_type.angle() && relative_speed < 0.0) ||
-                        (diff < aspect_type.angle() && relative_speed > 0.0);
+                    let is_applying = (diff > aspect_type.angle() && relative_speed < 0.0)
+                        || (diff < aspect_type.angle() && relative_speed > 0.0);
 
                     aspects.push(ComputedAspect {
                         planet1_key: p1.planet_key,
@@ -490,10 +609,14 @@ pub fn is_void_of_course_moon(jd: f64) -> Result<bool> {
     let orb = 8.0;
 
     for planet in &positions {
-        if planet.planet_key == "moon" { continue; }
+        if planet.planet_key == "moon" {
+            continue;
+        }
 
         let mut angle = (moon.longitude - planet.longitude).abs();
-        if angle > 180.0 { angle = 360.0 - angle; }
+        if angle > 180.0 {
+            angle = 360.0 - angle;
+        }
 
         for &aspect_angle in &major_aspects {
             let diff = (angle - aspect_angle).abs();
@@ -534,6 +657,7 @@ pub fn get_planet_in_house(longitude: f64, house_cusps: &[HouseCusp]) -> u8 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::julian;
 
     #[test]
     fn test_get_sign_from_longitude() {
@@ -552,6 +676,38 @@ mod tests {
         assert_eq!(get_moon_phase(0.0, 90.0), MoonPhase::FirstQuarter);
         assert_eq!(get_moon_phase(0.0, 180.0), MoonPhase::FullMoon);
         assert_eq!(get_moon_phase(0.0, 270.0), MoonPhase::LastQuarter);
+    }
+
+    #[test]
+    fn test_detect_solar_eclipse() {
+        // 2024-04-08 total solar eclipse, near maximum around 18:18 UT
+        let jd = julian::julday(2024, 4, 8, 18.0, 1);
+        let eclipse = detect_eclipse(jd).unwrap();
+        assert!(
+            eclipse.is_some(),
+            "Expected eclipse near 2024-04-08 18:00 UT"
+        );
+        assert_eq!(eclipse.unwrap().eclipse_type, EclipseType::Solar);
+    }
+
+    #[test]
+    fn test_detect_lunar_eclipse() {
+        // 2025-03-14 total lunar eclipse, near maximum around 06:58 UT
+        let jd = julian::julday(2025, 3, 14, 7.0, 1);
+        let eclipse = detect_eclipse(jd).unwrap();
+        assert!(
+            eclipse.is_some(),
+            "Expected eclipse near 2025-03-14 07:00 UT"
+        );
+        assert_eq!(eclipse.unwrap().eclipse_type, EclipseType::Lunar);
+    }
+
+    #[test]
+    fn test_non_eclipse_date() {
+        // Regular date away from eclipse season
+        let jd = julian::julday(2024, 6, 21, 12.0, 1);
+        assert_eq!(get_eclipse_type(jd).unwrap(), None);
+        assert!(!is_eclipse(jd).unwrap());
     }
 
     #[test]
@@ -637,7 +793,9 @@ mod tests {
             ..Default::default()
         };
         let narrow_aspects = compute_aspects_with_orbs(&chart, &chart, &narrow_orbs);
-        let has_square = narrow_aspects.iter().any(|a| a.aspect_type == AspectType::Square);
+        let has_square = narrow_aspects
+            .iter()
+            .any(|a| a.aspect_type == AspectType::Square);
         assert!(!has_square, "Should not find square with 4° orb");
 
         // With wide orbs (10° for square), 95° SHOULD be a square
@@ -646,7 +804,9 @@ mod tests {
             ..Default::default()
         };
         let wide_aspects = compute_aspects_with_orbs(&chart, &chart, &wide_orbs);
-        let has_square = wide_aspects.iter().any(|a| a.aspect_type == AspectType::Square);
+        let has_square = wide_aspects
+            .iter()
+            .any(|a| a.aspect_type == AspectType::Square);
         assert!(has_square, "Should find square with 10° orb");
     }
 }
