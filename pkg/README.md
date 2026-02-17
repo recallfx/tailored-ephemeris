@@ -112,6 +112,8 @@ getPlanetaryHourRuler(year, month, day, hour): string
 
 ## Accuracy
 
+### Planetary Positions
+
 Tested against Swiss Ephemeris across 150 years (1925-2075):
 
 | Body | Max Error |
@@ -121,6 +123,17 @@ Tested against Swiss Ephemeris across 150 years (1925-2075):
 | Mercury-Mars | <1 arcmin |
 | Jupiter-Neptune | <5 arcmin |
 | Pluto | <16 arcmin |
+
+### House Cusps (Placidus)
+
+Validated against Swiss Ephemeris (pyswisseph v2.10.03) across 4 geographic locations (London, New York, Sydney, Tokyo) spanning 1975-2000:
+
+| Component | Max Error |
+|-----------|-----------|
+| Ascendant | <0.01° |
+| MC | <0.01° |
+| Vertex | <0.01° |
+| All 12 cusps | <0.01° |
 
 Sufficient for all astrological applications.
 
