@@ -228,6 +228,8 @@ impl OrbConfig {
 pub struct PlanetPosition {
     pub planet_key: &'static str,
     pub longitude: f64,
+    pub latitude: f64,
+    pub distance: f64,
     pub sign_key: &'static str,
     pub sign_degree: f64,
     pub is_retrograde: bool,
@@ -504,6 +506,8 @@ pub fn get_all_planetary_positions(jd: f64) -> Result<Vec<PlanetPosition>> {
         positions.push(PlanetPosition {
             planet_key: key,
             longitude: pos.longitude,
+            latitude: pos.latitude,
+            distance: pos.distance,
             sign_key: get_sign_from_longitude(pos.longitude),
             sign_degree: get_sign_degree(pos.longitude),
             is_retrograde: pos.speed_longitude < 0.0,
@@ -575,6 +579,8 @@ pub fn get_all_heliocentric_positions(jd: f64) -> Result<Vec<PlanetPosition>> {
         positions.push(PlanetPosition {
             planet_key: key,
             longitude: pos.longitude,
+            latitude: pos.latitude,
+            distance: pos.distance,
             sign_key: get_sign_from_longitude(pos.longitude),
             sign_degree: get_sign_degree(pos.longitude),
             is_retrograde: false, // No retrograde in heliocentric frame

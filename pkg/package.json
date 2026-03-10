@@ -1,6 +1,5 @@
 {
   "name": "tailored-ephemeris",
-  "type": "module",
   "description": "Minimal astronomical ephemeris calculations for horoscope generation",
   "version": "0.1.0",
   "license": "GPL-3.0",
@@ -13,7 +12,7 @@
     "tailored_ephemeris.js",
     "tailored_ephemeris.d.ts"
   ],
-  "main": "tailored_ephemeris.js",
+  "module": "tailored_ephemeris.js",
   "types": "tailored_ephemeris.d.ts",
   "sideEffects": [
     "./snippets/*"

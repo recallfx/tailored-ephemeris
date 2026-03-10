@@ -305,6 +305,8 @@ pub fn swe_calc_ut_all(jd_ut: f64, iflag: Option<i32>) -> JsValue {
 pub struct JsPlanetPosition {
     pub planet_key: String,
     pub longitude: f64,
+    pub latitude: f64,
+    pub distance: f64,
     pub sign_key: String,
     pub sign_degree: f64,
     pub is_retrograde: bool,
@@ -427,6 +429,8 @@ pub fn get_all_planetary_positions(jd_ut: f64) -> JsValue {
                 .map(|p| JsPlanetPosition {
                     planet_key: p.planet_key.to_string(),
                     longitude: p.longitude,
+                    latitude: p.latitude,
+                    distance: p.distance,
                     sign_key: p.sign_key.to_string(),
                     sign_degree: p.sign_degree,
                     is_retrograde: p.is_retrograde,
@@ -459,6 +463,8 @@ pub fn get_natal_chart(jd_ut: f64, lat: f64, lon: f64) -> JsValue {
                     .map(|p| JsPlanetPosition {
                         planet_key: p.planet_key.to_string(),
                         longitude: p.longitude,
+                        latitude: p.latitude,
+                        distance: p.distance,
                         sign_key: p.sign_key.to_string(),
                         sign_degree: p.sign_degree,
                         is_retrograde: p.is_retrograde,
@@ -508,6 +514,8 @@ pub fn get_heliocentric_positions(jd_ut: f64) -> JsValue {
                 JsPlanetPosition {
                     planet_key: p.planet_key.to_string(),
                     longitude: p.longitude,
+                    latitude: p.latitude,
+                    distance: p.distance,
                     sign_key: p.sign_key.to_string(),
                     sign_degree: p.sign_degree,
                     is_retrograde: false,
@@ -538,6 +546,8 @@ pub fn get_heliocentric_chart(jd_ut: f64) -> JsValue {
                 planets: chart.planets.iter().map(|p| JsPlanetPosition {
                     planet_key: p.planet_key.to_string(),
                     longitude: p.longitude,
+                    latitude: p.latitude,
+                    distance: p.distance,
                     sign_key: p.sign_key.to_string(),
                     sign_degree: p.sign_degree,
                     is_retrograde: false,
@@ -671,6 +681,8 @@ pub fn compute_transit_aspects(jd_transit: f64, natal_positions: JsValue) -> JsV
                 _ => "sun",
             },
             longitude: p.longitude,
+            latitude: p.latitude,
+            distance: p.distance,
             sign_key: match p.sign_key.as_str() {
                 "aries" => "aries",
                 "taurus" => "taurus",
@@ -808,6 +820,8 @@ pub fn compute_transit_aspects_with_orbs(
                 _ => "sun",
             },
             longitude: p.longitude,
+            latitude: p.latitude,
+            distance: p.distance,
             sign_key: match p.sign_key.as_str() {
                 "aries" => "aries",
                 "taurus" => "taurus",
