@@ -326,9 +326,15 @@ pub fn calculate_moon_phase(jd: f64) -> Result<MoonPhase> {
     Ok(get_moon_phase(sun.longitude, moon.longitude))
 }
 
-const ECLIPSE_SYZYGY_ORB: f64 = 12.0;
-const SOLAR_ECLIPSE_NODE_ORB: f64 = 18.0;
-const LUNAR_ECLIPSE_NODE_ORB: f64 = 12.5;
+/// Maximum Sun-Moon orb for eclipse detection. With 6-hour sampling resolution,
+/// the closest sample to an exact syzygy is at most ~3° off. A threshold of 8°
+/// provides ample margin while rejecting false positives where the Moon is near
+/// a node but not yet in conjunction/opposition (e.g., 2026-03-18 had conj=10.4°).
+const ECLIPSE_SYZYGY_ORB: f64 = 8.0;
+/// Solar eclipse limit: the Moon must be within ~11.5° of a node for any
+/// type of solar eclipse (partial, annular, or total) to occur.
+const SOLAR_ECLIPSE_NODE_ORB: f64 = 11.5;
+const LUNAR_ECLIPSE_NODE_ORB: f64 = 12.0;
 
 fn angular_distance(lon1: f64, lon2: f64) -> f64 {
     let mut diff = (lon1 - lon2).abs() % 360.0;
